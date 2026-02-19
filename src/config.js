@@ -26,7 +26,7 @@ export function loadConfig() {
     hisPassword: process.env.HIS_MOBILE_PASSWORD,
     hisLoginUrl:
       process.env.HIS_MOBILE_LOGIN_URL ??
-      "https://his-mobile.com/member/login",
+      "https://his.mvno.ne.jp/hisso/signon/login.do?josso_back_to=https://his.mvno.ne.jp/checkout/josso_security_check&josso_partnerapp_host=his.mvno.ne.jp&josso_partnerapp_ctx=/checkout",
     headless: process.env.HEADLESS !== "false",
     timeoutMs: Number(process.env.BROWSER_TIMEOUT_MS ?? "45000"),
     sheetId: process.env.GOOGLE_SHEET_ID,
