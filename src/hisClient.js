@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+﻿import { chromium } from "playwright";
 import { parsePeriod, parsePlanName, parseUsageMb } from "./parser.js";
 
 function normalizePhone(text) {
@@ -7,10 +7,22 @@ function normalizePhone(text) {
 }
 
 async function waitDashboard(page, timeoutMs) {
+  await page.locator("text=ステータス情報").first().waitFor({ timeout: timeoutMs });
+}
+
+async function logPageDebug(page, label) {
+  const url = page.url();
+  const bodyText = (await page.locator("body").innerText().catch(() => ""))
+    .replace(/\s+/g, " ")
+    .slice(0, 500);
+
+  console.log(`[debug:${label}] url=${url}`);
+  console.log(`[debug:${label}] body_head=${bodyText}`);
+
+  const safeLabel = label.replace(/[^a-zA-Z0-9_-]/g, "_");
   await page
-    .locator("text=ステータス情報")
-    .first()
-    .waitFor({ timeout: timeoutMs });
+    .screenshot({ path: `debug-${safeLabel}.png`, fullPage: true })
+    .catch(() => {});
 }
 
 export async function fetchAllUsage(config) {
@@ -22,10 +34,16 @@ export async function fetchAllUsage(config) {
   const results = [];
   try {
     await page.goto(config.hisLoginUrl, { waitUntil: "domcontentloaded" });
+    await logPageDebug(page, "after_goto");
 
-    await page.locator(config.selectors.loginId).first().fill(config.hisId);
-    await page.locator(config.selectors.loginPassword).first().fill(config.hisPassword);
-    await page.locator(config.selectors.loginSubmit).first().click();
+    try {
+      await page.locator(config.selectors.loginId).first().fill(config.hisId);
+      await page.locator(config.selectors.loginPassword).first().fill(config.hisPassword);
+      await page.locator(config.selectors.loginSubmit).first().click();
+    } catch (err) {
+      await logPageDebug(page, "login_form_not_found_or_fill_failed");
+      throw err;
+    }
 
     await waitDashboard(page, config.timeoutMs);
 
