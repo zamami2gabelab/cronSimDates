@@ -1,0 +1,44 @@
+const required = [
+  "HIS_MOBILE_ID",
+  "HIS_MOBILE_PASSWORD",
+  "GOOGLE_SERVICE_ACCOUNT_JSON",
+  "GOOGLE_SHEET_ID"
+];
+
+function parseJsonSecret(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON. Set the full JSON in GitHub Secrets."
+    );
+  }
+}
+
+export function loadConfig() {
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`);
+  }
+
+  return {
+    hisId: process.env.HIS_MOBILE_ID,
+    hisPassword: process.env.HIS_MOBILE_PASSWORD,
+    hisLoginUrl:
+      process.env.HIS_MOBILE_LOGIN_URL ??
+      "https://his-mobile.com/member/login",
+    headless: process.env.HEADLESS !== "false",
+    timeoutMs: Number(process.env.BROWSER_TIMEOUT_MS ?? "45000"),
+    sheetId: process.env.GOOGLE_SHEET_ID,
+    sheetName: process.env.GOOGLE_SHEET_NAME ?? "raw_usage",
+    serviceAccount: parseJsonSecret(process.env.GOOGLE_SERVICE_ACCOUNT_JSON),
+    selectors: {
+      loginId: process.env.SELECTOR_LOGIN_ID ?? 'input[name="login_id"]',
+      loginPassword:
+        process.env.SELECTOR_LOGIN_PASSWORD ?? 'input[name="password"]',
+      loginSubmit:
+        process.env.SELECTOR_LOGIN_SUBMIT ?? 'button[type="submit"], input[type="submit"]',
+      simSelect: process.env.SELECTOR_SIM_SELECT ?? "select"
+    }
+  };
+}
