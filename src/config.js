@@ -1,4 +1,4 @@
-const required = [
+﻿const required = [
   "HIS_MOBILE_ID",
   "HIS_MOBILE_PASSWORD",
   "GOOGLE_SERVICE_ACCOUNT_JSON",
@@ -6,13 +6,31 @@ const required = [
 ];
 
 function parseJsonSecret(raw) {
+  let parsed;
   try {
-    return JSON.parse(raw);
+    parsed = JSON.parse(raw);
   } catch {
     throw new Error(
       "GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON. Set the full JSON in GitHub Secrets."
     );
   }
+
+  if (!parsed.client_email || !parsed.private_key) {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON must include client_email and private_key."
+    );
+  }
+
+  // GitHub Secrets often store private_key with escaped newlines (\\n).
+  parsed.private_key = String(parsed.private_key).replace(/\\n/g, "\n");
+
+  if (!parsed.private_key.includes("BEGIN PRIVATE KEY")) {
+    throw new Error(
+      "GOOGLE_SERVICE_ACCOUNT_JSON.private_key looks invalid. Recreate and re-set the service account JSON secret."
+    );
+  }
+
+  return parsed;
 }
 
 export function loadConfig() {
